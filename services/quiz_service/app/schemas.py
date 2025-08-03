@@ -157,3 +157,24 @@ class PaginatedQuizResponse(BaseModel):
     offset: int
     has_next: bool
     has_prev: bool
+
+# Leaderboard schemas
+class UserData(BaseModel):
+    email: str
+    name: Optional[str] = None
+
+class LeaderboardEntry(BaseModel):
+    user_id: str
+    score: int
+    rank: int
+    user_data: Optional[UserData] = None
+
+class LeaderboardResponse(BaseModel):
+    entries: List[LeaderboardEntry]
+    total_users: int
+    current_user_rank: Optional[int] = None
+    current_user_score: Optional[int] = None
+
+class UserScoreUpdate(BaseModel):
+    score: int
+    user_data: Optional[UserData] = None

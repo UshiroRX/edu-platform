@@ -19,6 +19,7 @@ from services.quiz_service.app.services.quiz_service import QuizService
 from services.quiz_service.app.services.gemini_service import GeminiService, QuizGenerationRequest
 from services.quiz_service.app.utils import get_quiz_with_questions
 from services.shared.edu_shared.dependencies import get_current_user_id
+import httpx
 
 router = APIRouter()
 
@@ -248,7 +249,7 @@ async def calculate_quiz_result(
     db: db_depends, 
     user_id: str = Depends(get_current_user_id)
 ):
-    """Calculate quiz result"""
+    """Calculate quiz result and update leaderboard"""
     print(f"Backend received quiz_id: {quiz_id}")
     print(f"Backend received result: {result}")
     print(f"Backend received answers: {result.answers}")
@@ -325,6 +326,37 @@ async def calculate_quiz_result(
     
     # Рассчитываем процент правильных ответов
     score = round((correct_answers / total_questions) * 100) if total_questions > 0 else 0
+    
+    # Обновляем leaderboard с заработанными баллами
+    try:
+        from services.quiz_service.app.services.leaderboard_service import LeaderboardService
+        
+        # Получаем текущие баллы пользователя
+        current_score = await LeaderboardService.get_user_score(user_id) or 0
+        
+        # Добавляем новые баллы к текущим
+        new_total_score = current_score + earned_points
+        
+        # Получаем email пользователя из auth service
+        auth_base_url = "http://auth-service:8000"
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{auth_base_url}/auth/user/{user_id}")
+            user_email = None
+            if response.status_code == 200:
+                user_data = response.json()
+                user_email = user_data.get("email")
+        
+        # Обновляем leaderboard
+        await LeaderboardService.add_user_score(
+            user_id=user_id,
+            score=new_total_score,
+            user_data={"email": user_email} if user_email else None
+        )
+        
+        print(f"Updated leaderboard for user {user_id}: {current_score} + {earned_points} = {new_total_score}")
+    except Exception as e:
+        print(f"Error updating leaderboard: {e}")
+        # Не прерываем выполнение, если leaderboard недоступен
     
     return QuizResultResponse(
         score=score,

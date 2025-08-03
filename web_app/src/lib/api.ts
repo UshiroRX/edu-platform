@@ -262,6 +262,13 @@ export const quizApi = {
     return response.json();
   },
 
+  async getUserQuizzes(userId: string, page = 1, size = 10) {
+    const response = await quizApiClient.get(
+      `/api/quiz/user/${userId}?page=${page}&size=${size}`
+    );
+    return response.json();
+  },
+
   async get(quizId: string) {
     const response = await quizApiClient.get(`/api/quiz/${quizId}`);
     return response.json();
@@ -304,5 +311,40 @@ export const quizApi = {
       generationData
     );
     return response.json();
+  },
+
+  // Leaderboard methods
+  async getLeaderboard(top = 10) {
+    const response = await quizApiClient.get(`/api/leaderboard/?top=${top}`);
+    return response.json();
+  },
+
+  async getUserScore(userId: string) {
+    const response = await quizApiClient.get(
+      `/api/leaderboard/user/${userId}/score`
+    );
+    return response.json();
+  },
+
+  async getUsersAroundUser(userId: string, rangeSize = 5) {
+    const response = await quizApiClient.get(
+      `/api/leaderboard/user/${userId}/around?range_size=${rangeSize}`
+    );
+    return response.json();
+  },
+
+  async updateUserScore(userId: string, score: number, userData?: any) {
+    const response = await quizApiClient.post(
+      `/api/leaderboard/user/${userId}/score`,
+      {
+        score,
+        user_data: userData,
+      }
+    );
+    return response.json();
+  },
+
+  async removeUserFromLeaderboard(userId: string) {
+    await quizApiClient.delete(`/api/leaderboard/user/${userId}`);
   },
 };

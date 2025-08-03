@@ -71,7 +71,7 @@ interface QuizState {
 interface QuizActions {
   // Получение квизов
   getUserQuizzes: (
-    userEmail: string,
+    userId: string,
     page?: number,
     size?: number
   ) => Promise<void>;
@@ -157,16 +157,12 @@ export const useQuizStore = create<QuizStore>()(
       },
 
       // Actions
-      getUserQuizzes: async (userEmail: string, page = 1, size = 10) => {
+      getUserQuizzes: async (userId: string, page = 1, size = 10) => {
         set({ isLoading: true, error: null });
 
         try {
-          // Используем email как user_id для поиска
-          const response = await quizApi.search({
-            user_email: userEmail,
-            page,
-            size,
-          });
+          // Используем user_id для получения квизов пользователя
+          const response = await quizApi.getUserQuizzes(userId, page, size);
 
           set({
             quizzes: response.items,

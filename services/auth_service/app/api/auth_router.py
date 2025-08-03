@@ -1,11 +1,10 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from services.auth_service.app.services.auth_service import authenticate_user, get_user_from_token, create_new_user, get_user
+from services.auth_service.app.services.auth_service import authenticate_user, get_user_from_token, create_new_user, get_user, get_user_by_id
 from services.auth_service.app.schemas import CreateUserRequest, LoginForm, Token, User, RegisterForm, RefreshTokenRequest
 from services.auth_service.app.utils import create_access_token, create_refresh_token, verify_token
 from services.auth_service.app.dependencies import db_depends
-
-
+from uuid import UUID
 
 router = APIRouter(tags=["auth"])
 
@@ -52,6 +51,16 @@ async def register(form: RegisterForm, db: db_depends):
 @router.post("/profile", response_model=User, status_code=status.HTTP_200_OK)
 async def get_profile(current_user : Annotated[User, Depends(get_user_from_token)]):
     return current_user
+
+@router.get("/user/{user_id}", response_model=User, status_code=status.HTTP_200_OK)
+async def get_user_by_id_endpoint(user_id: UUID, db: db_depends):
+    """Get user by ID"""
+    user = await get_user_by_id(db, user_id)
+    
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    return user
 
 @router.post("/refresh", response_model=Token, status_code=status.HTTP_200_OK)
 async def refresh_token(request: RefreshTokenRequest):

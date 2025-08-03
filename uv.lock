@@ -84,7 +84,7 @@ wheels = [
 [[package]]
 name = "auth-service"
 version = "0.1.0"
-source = { editable = "services/auth_service" }
+source = { virtual = "services/auth_service" }
 dependencies = [
     { name = "alembic" },
     { name = "asyncpg" },
@@ -103,7 +103,7 @@ dependencies = [
 requires-dist = [
     { name = "alembic" },
     { name = "asyncpg" },
-    { name = "edu-shared", editable = "services/shared" },
+    { name = "edu-shared", virtual = "services/shared" },
     { name = "fastapi" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
@@ -330,21 +330,7 @@ wheels = [
 [[package]]
 name = "edu-shared"
 version = "0.1.0"
-source = { editable = "services/shared" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "passlib", extra = ["bcrypt"] },
-    { name = "pydantic" },
-    { name = "python-jose", extra = ["cryptography"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = ">=0.104.0" },
-    { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
-    { name = "pydantic", specifier = ">=2.5.0" },
-    { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0" },
-]
+source = { virtual = "services/shared" }
 
 [[package]]
 name = "email-validator"
@@ -909,15 +895,20 @@ wheels = [
 [[package]]
 name = "quiz-service"
 version = "0.1.0"
-source = { editable = "services/quiz_service" }
+source = { virtual = "services/quiz_service" }
 dependencies = [
     { name = "alembic" },
     { name = "asyncpg" },
     { name = "edu-shared" },
     { name = "fastapi" },
     { name = "google-generativeai" },
+    { name = "greenlet" },
     { name = "httpx" },
-    { name = "pydantic" },
+    { name = "passlib", extra = ["bcrypt"] },
+    { name = "pydantic", extra = ["email"] },
+    { name = "pydantic-settings" },
+    { name = "python-jose", extra = ["cryptography"] },
+    { name = "python-multipart" },
     { name = "redis" },
     { name = "sqlalchemy" },
     { name = "uvicorn", extra = ["standard"] },
@@ -925,16 +916,21 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alembic", specifier = ">=1.12.0" },
-    { name = "asyncpg", specifier = ">=0.29.0" },
-    { name = "edu-shared", editable = "services/shared" },
-    { name = "fastapi", specifier = ">=0.104.0" },
+    { name = "alembic" },
+    { name = "asyncpg" },
+    { name = "edu-shared", virtual = "services/shared" },
+    { name = "fastapi" },
     { name = "google-generativeai", specifier = ">=0.3.0" },
+    { name = "greenlet", specifier = ">=3.0.0" },
     { name = "httpx", specifier = ">=0.24.0" },
-    { name = "pydantic", specifier = ">=2.5.0" },
+    { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
+    { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
+    { name = "pydantic-settings", specifier = ">=2.10.1" },
+    { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "redis", specifier = ">=5.0.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.0" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.24.0" },
+    { name = "sqlalchemy", specifier = ">=2.0" },
+    { name = "uvicorn", extras = ["standard"] },
 ]
 
 [[package]]
@@ -964,26 +960,34 @@ wheels = [
 [[package]]
 name = "results-service"
 version = "0.1.0"
-source = { editable = "services/results_service" }
+source = { virtual = "services/results_service" }
 dependencies = [
     { name = "alembic" },
     { name = "asyncpg" },
     { name = "edu-shared" },
     { name = "fastapi" },
-    { name = "pydantic" },
+    { name = "passlib", extra = ["bcrypt"] },
+    { name = "pydantic", extra = ["email"] },
+    { name = "pydantic-settings" },
+    { name = "python-jose", extra = ["cryptography"] },
+    { name = "python-multipart" },
     { name = "sqlalchemy" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "alembic", specifier = ">=1.12.0" },
-    { name = "asyncpg", specifier = ">=0.29.0" },
-    { name = "edu-shared", editable = "services/shared" },
-    { name = "fastapi", specifier = ">=0.104.0" },
-    { name = "pydantic", specifier = ">=2.5.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.0" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.24.0" },
+    { name = "alembic" },
+    { name = "asyncpg" },
+    { name = "edu-shared", virtual = "services/shared" },
+    { name = "fastapi" },
+    { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
+    { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
+    { name = "pydantic-settings", specifier = ">=2.10.1" },
+    { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
+    { name = "sqlalchemy", specifier = ">=2.0" },
+    { name = "uvicorn", extras = ["standard"] },
 ]
 
 [[package]]
