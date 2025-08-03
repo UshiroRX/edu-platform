@@ -269,6 +269,11 @@ export const quizApi = {
     return response.json();
   },
 
+  async getUserStats(userId: string) {
+    const response = await quizApiClient.get(`/api/quiz/user/${userId}/stats`);
+    return response.json();
+  },
+
   async get(quizId: string) {
     const response = await quizApiClient.get(`/api/quiz/${quizId}`);
     return response.json();

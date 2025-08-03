@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     DATABASE_URL : str
     GOOGLE_API_KEY : str
     REDIS_URL: str = "redis://redis:6379"
+    FRONTEND_URL: str
     
     class Config:
         env_file = Path.cwd() / ".env" 

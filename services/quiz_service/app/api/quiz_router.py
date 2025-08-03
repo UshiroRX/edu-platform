@@ -242,6 +242,32 @@ async def get_user_quiz_count(user_id: UUID, db: db_depends):
     count = await quiz_service.get_quiz_count_by_user(user_id)
     return {"user_id": user_id, "quiz_count": count, "status": "success"}
 
+@router.get("/user/{user_id}/stats")
+async def get_user_stats(user_id: UUID, db: db_depends):
+    """Get user statistics"""
+    quiz_service = QuizService(db)
+    
+    try:
+        # Получаем количество созданных квизов
+        created_quizzes = await quiz_service.get_quiz_count_by_user(user_id)
+        
+        # Здесь можно добавить логику для подсчета пройденных квизов
+        # Пока возвращаем базовую статистику
+        stats = {
+            "user_id": str(user_id),
+            "created_quizzes": created_quizzes,
+            "passed_quizzes": 0,  # TODO: Добавить подсчет пройденных квизов
+            "total_points": 0,     # TODO: Добавить подсчет баллов
+            "average_score": 0     # TODO: Добавить подсчет среднего балла
+        }
+        
+        return stats
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting user stats: {str(e)}"
+        )
+
 @router.post("/{quiz_id}/calculate-result", response_model=QuizResultResponse)
 async def calculate_quiz_result(
     quiz_id: UUID, 

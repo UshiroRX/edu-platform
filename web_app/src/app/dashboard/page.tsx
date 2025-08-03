@@ -179,6 +179,14 @@ export default function DashboardPage() {
                     {user?.email}
                   </p>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push("/profile")}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  Профиль
+                </Button>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
                 </Button>
