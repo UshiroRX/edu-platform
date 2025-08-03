@@ -1,0 +1,363 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Coding Standards & Quality
+
+## Общие принципы
+
+### Чистый код
+- **Читаемость** - код должен быть понятным для других разработчиков
+- **Простота** - избегайте сложных решений там, где можно простое
+- **Поддерживаемость** - код должен быть легким для изменения и расширения
+- **Тестируемость** - код должен быть легко тестируемым
+
+### SOLID принципы
+- **S** - Single Responsibility Principle
+- **O** - Open/Closed Principle  
+- **L** - Liskov Substitution Principle
+- **I** - Interface Segregation Principle
+- **D** - Dependency Inversion Principle
+
+## Frontend (TypeScript/React)
+
+### Компоненты
+```typescript
+// ✅ Хорошо - четкая структура
+interface UserCardProps {
+  user: User;
+  onEdit?: (user: User) => void;
+  onDelete?: (userId: string) => void;
+}
+
+export function UserCard({ user, onEdit, onDelete }: UserCardProps) {
+  return (
+    <div className="p-4 border rounded-lg">
+      <h3 className="text-lg font-semibold">{user.name}</h3>
+      <p className="text-gray-600">{user.email}</p>
+      <div className="mt-4 space-x-2">
+        {onEdit && (
+          <Button onClick={() => onEdit(user)}>Edit</Button>
+        )}
+        {onDelete && (
+          <Button variant="destructive" onClick={() => onDelete(user.id)}>
+            Delete
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ❌ Плохо - слишком много ответственности
+export function UserCard({ user }: { user: User }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState(user);
+  
+  const handleSubmit = async (data: FormData) => {
+    // 50 строк логики
+  };
+  
+  const handleDelete = async () => {
+    // 30 строк логики
+  };
+  
+  // 100+ строк компонента
+}
+```
+
+### Хуки
+```typescript
+// ✅ Хорошо - кастомный хук
+export function useUser(userId: string) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const data = await userService.getUser(userId);
+        setUser(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [userId]);
+
+  return { user, loading, error };
+}
+
+// ❌ Плохо - логика в компоненте
+function UserProfile({ userId }: { userId: string }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  // Дублирование логики в каждом компоненте
+}
+```
+
+### Типизация
+```typescript
+// ✅ Хорошо - строгая типизация
+interface ApiResponse<T> {
+  data: T;
+  message: string;
+  success: boolean;
+}
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: Date;
+}
+
+// ❌ Плохо - any типы
+function handleUser(user: any) {
+  return user.name; // Нет проверки типов
+}
+```
+
+## Backend (Python/FastAPI)
+
+### Функции и методы
+```python
+# ✅ Хорошо - четкая структура
+async def create_user(
+    db: AsyncSession,
+    user_data: UserCreate
+) -> User:
+    """Создает нового пользователя.
+    
+    Args:
+        db: Сессия базы данных
+        user_data: Данные пользователя
+        
+    Returns:
+        User: Созданный пользователь
+        
+    Raises:
+        DuplicateEmailError: Если email уже существует
+    """
+    # Проверка существования email
+    existing_user = await get_user_by_email(db, user_data.email)
+    if existing_user:
+        raise DuplicateEmailError(f"Email {user_data.email} already exists")
+    
+    # Создание пользователя
+    user = User(
+        email=user_data.email,
+        hashed_password=hash_password(user_data.password),
+        name=user_data.name
+    )
+    
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
+
+# ❌ Плохо - слишком много в одной функции
+async def handle_user_creation(user_data, db, email_service, notification_service):
+    # 100+ строк логики
+    # Смешивание ответственности
+    # Сложно тестировать
+```
+
+### Обработка ошибок
+```python
+# ✅ Хорошо - кастомные исключения
+class UserNotFoundError(Exception):
+    """Пользователь не найден."""
+    pass
+
+class DuplicateEmailError(Exception):
+    """Email уже существует."""
+    pass
+
+# Обработка в сервисе
+async def get_user_by_id(db: AsyncSession, user_id: UUID) -> User:
+    user = await db.get(User, user_id)
+    if not user:
+        raise UserNotFoundError(f"User with id {user_id} not found")
+    return user
+
+# ❌ Плохо - общие исключения
+async def get_user_by_id(db: AsyncSession, user_id: UUID) -> User:
+    user = await db.get(User, user_id)
+    if not user:
+        raise Exception("User not found")  # Неинформативно
+    return user
+```
+
+### Валидация данных
+```python
+# ✅ Хорошо - Pydantic схемы
+class UserCreate(BaseModel):
+    email: str = Field(..., regex=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+    password: str = Field(..., min_length=8, max_length=128)
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    
+    @validator('password')
+    def validate_password(cls, v):
+        if not any(c.isupper() for c in v):
+            raise ValueError('Password must contain uppercase letter')
+        if not any(c.islower() for c in v):
+            raise ValueError('Password must contain lowercase letter')
+        if not any(c.isdigit() for c in v):
+            raise ValueError('Password must contain digit')
+        return v
+
+# ❌ Плохо - ручная валидация
+def create_user(email: str, password: str):
+    if '@' not in email:
+        raise ValueError("Invalid email")
+    if len(password) < 8:
+        raise ValueError("Password too short")
+    # Много дублированного кода
+```
+
+## База данных
+
+### Модели
+```python
+# ✅ Хорошо - четкая структура модели
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    name = Column(String(100), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Отношения
+    quizzes = relationship("Quiz", back_populates="author")
+    
+    def __repr__(self):
+        return f"<User(id={self.id}, email={self.email})>"
+
+# ❌ Плохо - неинформативные имена
+class U(Base):
+    __tablename__ = "u"
+    
+    i = Column(Integer, primary_key=True)
+    e = Column(String)
+    p = Column(String)
+```
+
+### Запросы
+```python
+# ✅ Хорошо - оптимизированные запросы
+async def get_users_with_quizzes(db: AsyncSession, limit: int = 10) -> List[User]:
+    query = (
+        select(User)
+        .options(joinedload(User.quizzes))
+        .where(User.is_active == True)
+        .order_by(User.created_at.desc())
+        .limit(limit)
+    )
+    result = await db.execute(query)
+    return result.scalars().unique().all()
+
+# ❌ Плохо - N+1 проблема
+async def get_users_with_quizzes(db: AsyncSession) -> List[User]:
+    users = await db.execute(select(User))
+    for user in users:
+        user.quizzes = await db.execute(select(Quiz).where(Quiz.user_id == user.id))
+    return users
+```
+
+## Тестирование
+
+### Unit тесты
+```python
+# ✅ Хорошо - структурированные тесты
+class TestUserService:
+    @pytest.fixture
+    async def db_session(self):
+        async with get_test_db() as session:
+            yield session
+    
+    @pytest.fixture
+    def user_data(self):
+        return UserCreate(
+            email="test@example.com",
+            password="TestPassword123",
+            name="Test User"
+        )
+    
+    async def test_create_user_success(self, db_session, user_data):
+        # Arrange
+        user_service = UserService()
+        
+        # Act
+        user = await user_service.create_user(db_session, user_data)
+        
+        # Assert
+        assert user.email == user_data.email
+        assert user.name == user_data.name
+        assert user.hashed_password != user_data.password  # Проверка хеширования
+
+# ❌ Плохо - неструктурированные тесты
+def test_user():
+    # Все в одном тесте
+    user = create_user()
+    assert user.email == "test@example.com"
+    user = update_user(user)
+    assert user.name == "Updated"
+    delete_user(user)
+    assert get_user(user.id) is None
+```
+
+## Документация
+
+### Docstrings
+```python
+# ✅ Хорошо - подробная документация
+def calculate_user_score(answers: List[Answer], quiz: Quiz) -> float:
+    """Вычисляет итоговый балл пользователя за тест.
+    
+    Args:
+        answers: Список ответов пользователя
+        quiz: Тест с правильными ответами
+        
+    Returns:
+        float: Балл от 0.0 до 100.0
+        
+    Raises:
+        ValueError: Если количество ответов не соответствует количеству вопросов
+        
+    Example:
+        >>> answers = [Answer(question_id=1, answer="A")]
+        >>> quiz = Quiz(questions=[Question(id=1, correct_answer="A")])
+        >>> calculate_user_score(answers, quiz)
+        100.0
+    """
+    if len(answers) != len(quiz.questions):
+        raise ValueError("Number of answers must match number of questions")
+    
+    correct_answers = sum(
+        1 for answer, question in zip(answers, quiz.questions)
+        if answer.answer == question.correct_answer
+    )
+    
+    return (correct_answers / len(quiz.questions)) * 100.0
+```
+
+## Производительность
+
+### Оптимизация
+- Используйте индексы для часто запрашиваемых полей
+- Применяйте пагинацию для больших списков
+- Кэшируйте часто используемые данные
+- Оптимизируйте запросы к базе данных
+- Используйте асинхронные операции где возможно

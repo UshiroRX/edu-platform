@@ -1,0 +1,269 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# DevOps & Docker Rules
+
+## Docker & Containerization
+
+### Структура контейнеров
+- **Frontend**: [web_app/](mdc:web_app) - Next.js приложение
+- **Backend Services**: [services/](mdc:services) - FastAPI микросервисы
+- **Database**: PostgreSQL с [init-db.sh](mdc:init-db.sh)
+- **Reverse Proxy**: [services/nginx/](mdc:services/nginx) - Nginx
+
+### Docker Compose
+Основная конфигурация в [docker-compose.yml](mdc:docker-compose.yml):
+```yaml
+services:
+  db:           # PostgreSQL база данных
+  nginx:        # Reverse proxy
+  auth-service: # Аутентификация
+  results-service: # Результаты тестов
+  quiz-service: # Управление тестами
+```
+
+### Команды разработки
+```bash
+# Полный запуск
+make build
+
+# Разработка с hot reload
+make dev
+
+# Остановка
+make down
+
+# Логи
+make logs
+
+# Пересборка без кэша
+make build_no_cache
+```
+
+## Микросервисная архитектура
+
+### Сервисы и порты
+- **Frontend**: http://localhost:3000 (Next.js dev)
+- **Auth Service**: http://localhost:8001
+- **Results Service**: http://localhost:8002  
+- **Quiz Service**: http://localhost:8003
+- **Database**: localhost:5432
+- **Nginx**: http://localhost:8000 (production proxy)
+
+### Взаимодействие сервисов
+```
+Frontend (Next.js)
+    ↓ HTTP requests
+Nginx (Reverse Proxy)
+    ↓ Route to services
+Auth Service ←→ Results Service ←→ Quiz Service
+    ↓
+PostgreSQL Database
+```
+
+## База данных
+
+### PostgreSQL
+- **Host**: db (в Docker) / localhost (dev)
+- **Port**: 5432
+- **Database**: platform_db
+- **User**: platform_user
+- **Password**: strong_password
+
+### Миграции
+```bash
+# Auth Service
+make auth_service_migrate    # Создать миграцию
+make auth_service_upgrade   # Применить миграции
+
+# Results Service  
+make results_service_migrate
+make results_service_upgrade
+
+# Quiz Service
+make quiz_service_migrate
+make quiz_service_upgrade
+```
+
+### Инициализация БД
+- Скрипт [init-db.sh](mdc:init-db.sh) создает базу и пользователей
+- Health check для PostgreSQL в [docker-compose.yml](mdc:docker-compose.yml)
+
+## Environment Variables
+
+### Frontend (.env.local)
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_AUTH_URL=http://localhost:8001
+```
+
+### Backend Services
+```env
+DATABASE_URL=postgresql+asyncpg://platform_user:strong_password@db:5432/platform_db
+JWT_SECRET_KEY=your-secret-key
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+```
+
+## Nginx Configuration
+
+### Reverse Proxy
+Nginx в [services/nginx/](mdc:services/nginx) проксирует запросы:
+- `/api/auth/*` → auth-service:8000
+- `/api/results/*` → results-service:8000  
+- `/api/quiz/*` → quiz-service:8000
+- `/` → frontend (в production)
+
+### SSL/TLS
+- В production используйте SSL сертификаты
+- Настройте HTTPS редирект
+- Secure headers для безопасности
+
+## Мониторинг и логирование
+
+### Health Checks
+```python
+# В каждом сервисе
+@router.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "auth-service",
+        "timestamp": datetime.utcnow()
+    }
+```
+
+### Логирование
+```bash
+# Просмотр логов всех сервисов
+make logs
+
+# Логи конкретного сервиса
+docker compose logs auth-service
+
+# Логи с follow
+docker compose logs -f auth-service
+```
+
+## Развертывание
+
+### Development
+```bash
+# Запуск в режиме разработки
+make dev
+
+# Это запускает:
+# - PostgreSQL в Docker
+# - Auth Service локально на порту 8001
+# - Results Service локально на порту 8002  
+# - Quiz Service локально на порту 8003
+# - Frontend локально на порту 3000
+```
+
+### Production
+```bash
+# Сборка и запуск всех контейнеров
+make build
+
+# Остановка
+make down
+```
+
+## Безопасность
+
+### Docker Security
+- Используйте non-root пользователей в контейнерах
+- Минимизируйте количество слоев в Dockerfile
+- Сканируйте образы на уязвимости
+- Обновляйте базовые образы регулярно
+
+### Network Security
+- Изолируйте сервисы в Docker networks
+- Используйте внутренние DNS имена
+- Ограничьте доступ к портам
+
+## Производительность
+
+### Оптимизация контейнеров
+```dockerfile
+# Многоэтапная сборка
+FROM python:3.12-slim as builder
+# ... build dependencies
+
+FROM python:3.12-slim as runtime
+# ... copy only necessary files
+```
+
+### Resource Limits
+```yaml
+# В docker-compose.yml
+services:
+  auth-service:
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+```
+
+## Troubleshooting
+
+### Частые проблемы
+
+#### Сервис не запускается
+```bash
+# Проверьте логи
+docker compose logs auth-service
+
+# Проверьте статус контейнеров
+docker compose ps
+
+# Перезапустите сервис
+docker compose restart auth-service
+```
+
+#### Проблемы с БД
+```bash
+# Проверьте подключение к БД
+docker compose exec db psql -U platform_user -d platform_db
+
+# Примените миграции
+make auth_service_upgrade
+```
+
+#### Проблемы с сетью
+```bash
+# Проверьте Docker networks
+docker network ls
+
+# Проверьте DNS
+docker compose exec auth-service nslookup db
+```
+
+## CI/CD (Future)
+
+### GitHub Actions
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and deploy
+        run: |
+          docker compose build
+          docker compose up -d
+```
+
+### Environment Management
+- Используйте разные конфигурации для dev/staging/prod
+- Храните секреты в secure storage
+- Используйте feature flags для постепенного развертывания

@@ -1,0 +1,19 @@
+[project]
+name = "auth-service"
+version = "0.1.0"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy>=2.0",
+    "asyncpg",
+    "alembic",
+    "pydantic-settings>=2.10.1",
+    "python-jose[cryptography]>=3.5.0",
+    "passlib[bcrypt]>=1.7.4",
+    "pydantic[email]>=2.11.7",
+    "python-multipart>=0.0.20",
+     "edu-shared"
+]
+
+[tool.uv.sources]
+edu-shared = { workspace = true }

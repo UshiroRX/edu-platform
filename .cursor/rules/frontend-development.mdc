@@ -1,0 +1,148 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Frontend Development Rules
+
+## Next.js 15 + React 19 + TypeScript
+
+### Структура компонентов
+
+#### App Router Structure
+- Используйте [App Router](mdc:web_app/src/app/) для маршрутизации
+- Страницы в [app/](mdc:web_app/src/app/) с layout.tsx
+- API routes в [app/api/](mdc:web_app/src/app/api/)
+
+#### Компоненты
+- UI компоненты в [components/ui/](mdc:web_app/src/components/ui/)
+- Бизнес-компоненты в [components/](mdc:web_app/src/components/)
+- Используйте [Radix UI](mdc:web_app/package.json) для доступности
+- [Tailwind CSS](mdc:web_app/src/app/globals.css) для стилизации
+
+#### Состояние приложения
+- [Zustand](mdc:web_app/src/stores/) для глобального состояния
+- React Hook Form для форм
+- Zod для валидации схем
+
+### Стандарты кода
+
+#### TypeScript
+```typescript
+// Строгая типизация
+interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+// Компоненты с типизацией
+interface ButtonProps {
+  variant?: 'primary' | 'secondary';
+  children: React.ReactNode;
+  onClick?: () => void;
+}
+```
+
+#### Компоненты
+```typescript
+// PascalCase для компонентов
+export function UserProfile({ user }: { user: User }) {
+  return (
+    <div className="space-y-4">
+      <h2>{user.name}</h2>
+      <p>{user.email}</p>
+    </div>
+  );
+}
+```
+
+#### API интеграция
+- Используйте [axios](mdc:web_app/src/services/) для HTTP запросов
+- Централизованная обработка ошибок
+- Типизированные API responses
+
+### UI/UX принципы
+
+#### Дизайн система
+- Используйте [shadcn/ui](mdc:web_app/components.json) компоненты
+- Консистентная цветовая схема
+- Responsive дизайн
+- Accessibility (a11y) стандарты
+
+#### Формы
+```typescript
+// React Hook Form + Zod
+const formSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+const form = useForm<z.infer<typeof formSchema>>({
+  resolver: zodResolver(formSchema),
+});
+```
+
+### Производительность
+
+#### Оптимизация
+- Используйте `useMemo` и `useCallback` для тяжелых вычислений
+- Lazy loading для компонентов
+- Image optimization с Next.js Image
+- Code splitting автоматически
+
+#### SEO
+- Метаданные в layout.tsx
+- Semantic HTML
+- Open Graph теги
+- Structured data
+
+### Тестирование
+
+#### Unit тесты
+- Jest + React Testing Library
+- Тестируйте бизнес-логику
+- Mock внешние зависимости
+
+#### E2E тесты
+- Playwright для критических путей
+- Тестируйте пользовательские сценарии
+
+### Безопасность
+
+#### Frontend Security
+- Валидация на клиенте и сервере
+- XSS защита
+- CSRF токены
+- Secure HTTP headers
+
+### Разработка
+
+#### Команды
+```bash
+# Разработка
+pnpm dev
+
+# Сборка
+pnpm build
+
+# Линтинг
+pnpm lint
+
+# Type checking
+pnpm type-check
+```
+
+#### Структура файлов
+```
+src/
+├── app/              # App Router pages
+├── components/       # React components
+│   ├── ui/          # UI components
+│   └── forms/       # Form components
+├── services/         # API services
+├── stores/          # Zustand stores
+├── types/           # TypeScript types
+├── utils/           # Utility functions
+└── lib/             # Third-party configs
+```

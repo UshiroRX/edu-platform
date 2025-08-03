@@ -1,0 +1,16 @@
+
+
+[tool.uv.workspace]
+members = [
+    # Указываем пути к нашим Python-пакетам от корня
+    "services/auth_service",
+    "services/results_service",
+    "services/shared",
+    "services/quiz_service"
+]
+
+[dependency-groups]
+dev = [
+    "greenlet>=3.2.3",
+    "sqlalchemy-utils>=0.41.2",
+]
